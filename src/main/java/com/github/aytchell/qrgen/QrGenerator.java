@@ -131,7 +131,7 @@ public class QrGenerator implements Cloneable {
      * @param imageType the image file to be produced by this instance
      * @return this instance so that config calls can be chained
      */
-    public QrGenerator as(ImageFileType imageType) {
+    public QrGenerator ofType(ImageFileType imageType) {
         this.imageType = imageType;
         return this;
     }
