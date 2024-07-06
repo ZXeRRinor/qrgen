@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -390,72 +391,41 @@ public class QrGenerator implements Cloneable {
     /**
      * Actually create q QR code with the given configuration and payload
      * <p>
-     * This method takes the configuration collected up to here (by using
-     * the other methods) and a payload string and creates an image file
-     * containing a QR code.
-     * <p>
-     * The resulting file is created in the global tmp directory of the
-     * underlying OS with no specific file permissions (so most probably
-     * it is readable by anyone). The file will be deleted on exit of the
-     * JVM but of course you can (and maybe should) delete it as soon as
-     * you no longer need it. Simply renaming or moving the file to some
-     * "local storage" might be no good idea because the JVM will delete
-     * it sooner or later.
-     * <p>
-     * Note that calling this method does not change the configuration.
-     * So you can keep the instance and generate more QR codes without
-     * repeating the configuration steps.
+     * This method writes QR code data to given output stream.
      *
      * @param payload the string to be encoded into a QR code
+     * @param outputStream a prefix for the name of the created tmp file
      *
-     * @return an image file showing a QR code
      * @throws IOException thrown in case something goes wrong while handling
-     *      the tmp file or producing the requested image format
-     * @throws QrGenerationException thrown in case the computation of the
-     *      QR code goes wrong. This is independent of file operations or
-     *      image formats.
-     * @see QrGenerator#writeToTmpFile(String, String)
+     *      the stream or producing the requested image format
      */
-    public Path writeToTmpFile(String payload)
-            throws IOException, QrGenerationException {
-        return writeToTmpFile(payload, null);
+    public void writeQrCodeToStream(OutputStream outputStream, String payload)
+            throws WriterException, IOException {
+        final BufferedImage image = generateImage(payload);
+        if (!ImageIO.write(image, imageType.name(), outputStream)) {
+            throw new IOException("Could not write an image of format " + imageType.name() +
+                    " to output stream");
+        }
     }
 
     /**
      * Actually create q QR code with the given configuration and payload
      * <p>
-     * This method does the same as {@link QrGenerator#writeToTmpFile(String)}.
-     * The only difference is that you can give an additional prefix for the
-     * name of the created tmp file.
+     * This method takes the configuration collected up to here (by using
+     * the other methods) and generates QR code as image data.
      *
      * @param payload the string to be encoded into a QR code
-     * @param tmpFilePrefix a prefix for the name of the created tmp file
      *
-     * @return an image file showing a QR code
-     * @throws IOException thrown in case something goes wrong while handling
-     *      the tmp file or producing the requested image format
-     * @throws QrGenerationException thrown in case the computation of the
-     *      QR code goes wrong. This is independent of file operations or
-     *      image formats.
-     * @see QrGenerator#writeToTmpFile(String)
+     * @return an ImageIO image object (BufferedImage) with QR code
+     * @throws WriterException thrown in case something goes wrong while encoding
+     *      data to QR code
      */
-    public Path writeToTmpFile(String payload, String tmpFilePrefix)
-            throws IOException, QrGenerationException {
-        try {
-            final Path tmpFile = createTempFile(tmpFilePrefix);
-            writeQrCodeToFile(tmpFile, payload);
-            return tmpFile;
-        } catch (WriterException e) {
-            throw new QrGenerationException("Failed to write QR code to tmp file", e);
-        }
-    }
-
-    private void writeQrCodeToFile(Path tmpFile, String payload)
-            throws WriterException, IOException {
-        final BufferedImage image = generateImage(payload);
-        if (!ImageIO.write(image, imageType.name(), tmpFile.toFile())) {
-            throw new IOException("Could not write an image of format " + imageType.name() +
-                    " to " + tmpFile);
+    public BufferedImage generateImage(String payload) throws WriterException {
+        final BufferedImage qrCodeImage = renderer.encodeAndRender(payload, colorConfig, width, height, hints);
+        if (logo == null) {
+            return qrCodeImage;
+        } else {
+            return mergeLogoIntoQrCode(qrCodeImage);
         }
     }
 
@@ -480,26 +450,6 @@ public class QrGenerator implements Cloneable {
             hints.put(hintType, value);
         }
         return this;
-    }
-
-    private Path createTempFile(final String prefix) throws IOException {
-        if (prefix == null)
-            return createTempFile("qr_");
-
-        final String suffix = "." + imageType.name().toLowerCase();
-
-        final Path path = Files.createTempFile(prefix, suffix);
-        path.toFile().deleteOnExit();
-        return path;
-    }
-
-    private BufferedImage generateImage(String payload) throws WriterException {
-        final BufferedImage qrCodeImage = renderer.encodeAndRender(payload, colorConfig, width, height, hints);
-        if (logo == null) {
-            return qrCodeImage;
-        } else {
-            return mergeLogoIntoQrCode(qrCodeImage);
-        }
     }
 
     private BufferedImage mergeLogoIntoQrCode(BufferedImage qrcode) {
