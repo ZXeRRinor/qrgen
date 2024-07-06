@@ -398,13 +398,18 @@ public class QrGenerator implements Cloneable {
      *
      * @throws IOException thrown in case something goes wrong while handling
      *      the stream or producing the requested image format
+     * @throws QrGenerationException thrown in case something goes wrong while encoding
+     *      data to QR code
      */
     public void writeQrCodeToStream(OutputStream outputStream, String payload)
-            throws WriterException, IOException {
+        throws IOException, QrGenerationException {
         final BufferedImage image = generateImage(payload);
         if (!ImageIO.write(image, imageType.name(), outputStream)) {
-            throw new IOException("Could not write an image of format " + imageType.name() +
-                    " to output stream");
+            throw new IOException(
+                "Could not write an image of format "
+                    + imageType.name()
+                    + " to output stream"
+            );
         }
     }
 
@@ -417,15 +422,26 @@ public class QrGenerator implements Cloneable {
      * @param payload the string to be encoded into a QR code
      *
      * @return an ImageIO image object (BufferedImage) with QR code
-     * @throws WriterException thrown in case something goes wrong while encoding
+     * @throws QrGenerationException thrown in case something goes wrong while encoding
      *      data to QR code
      */
-    public BufferedImage generateImage(String payload) throws WriterException {
-        final BufferedImage qrCodeImage = renderer.encodeAndRender(payload, colorConfig, width, height, hints);
-        if (logo == null) {
-            return qrCodeImage;
-        } else {
-            return mergeLogoIntoQrCode(qrCodeImage);
+    public BufferedImage generateImage(String payload)
+        throws QrGenerationException {
+        try {
+            final BufferedImage qrCodeImage = renderer.encodeAndRender(
+                payload,
+                colorConfig,
+                width,
+                height,
+                hints
+            );
+            if (logo == null) {
+                return qrCodeImage;
+            } else {
+                return mergeLogoIntoQrCode(qrCodeImage);
+            }
+        } catch (WriterException e) {
+            throw new QrGenerationException("Failed generate QR code", e);
         }
     }
 

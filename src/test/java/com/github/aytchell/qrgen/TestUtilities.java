@@ -53,41 +53,39 @@ public class TestUtilities {
         return img;
     }
 
-    public static ImageFileType findOutImageTypeOfFile(Path path) throws IOException {
-        try (final InputStream input = Files.newInputStream(path)) {
-            final int NUMBER_MAGIC_BYTES = MAGIC_BYTES_GIF.length;
+    public static ImageFileType findOutImageTypeOfStream(InputStream input) throws IOException {
+        final int NUMBER_MAGIC_BYTES = MAGIC_BYTES_GIF.length;
 
-            // read the first bytes of the file and compare with well-known magic byte sequences
-            final byte[] magic = new byte[NUMBER_MAGIC_BYTES];
-            final int bytesRead = input.read(magic);
-            assertEquals(NUMBER_MAGIC_BYTES, bytesRead);
+        // read the first bytes of the file and compare with well-known magic byte sequences
+        final byte[] magic = new byte[NUMBER_MAGIC_BYTES];
+        final int bytesRead = input.read(magic);
+        assertEquals(NUMBER_MAGIC_BYTES, bytesRead);
 
-            // the following checks only work properly if the arrays have the same size
-            assertEquals(NUMBER_MAGIC_BYTES, MAGIC_BYTES_GIF.length);
-            assertEquals(NUMBER_MAGIC_BYTES, MAGIC_BYTES_PNG.length);
-            assertEquals(NUMBER_MAGIC_BYTES, MAGIC_BYTES_JPG.length);
+        // the following checks only work properly if the arrays have the same size
+        assertEquals(NUMBER_MAGIC_BYTES, MAGIC_BYTES_GIF.length);
+        assertEquals(NUMBER_MAGIC_BYTES, MAGIC_BYTES_PNG.length);
+        assertEquals(NUMBER_MAGIC_BYTES, MAGIC_BYTES_JPG.length);
 
-            if (Arrays.equals(magic, MAGIC_BYTES_PNG)) {
-                return ImageFileType.PNG;
-            }
-            if (Arrays.equals(magic, MAGIC_BYTES_JPG)) {
-                return ImageFileType.JPG;
-            }
-            if (Arrays.equals(magic, MAGIC_BYTES_GIF)) {
-                return ImageFileType.GIF;
-            }
-
-            // the magic byte sequence of BMP is shorter
-            assertTrue(NUMBER_MAGIC_BYTES > MAGIC_BYTES_BMP.length);
-            final byte[] bmpMagic = new byte[MAGIC_BYTES_BMP.length];
-            System.arraycopy(magic, 0, bmpMagic, 0, MAGIC_BYTES_BMP.length);
-
-            if (Arrays.equals(bmpMagic, MAGIC_BYTES_BMP)) {
-                return ImageFileType.BMP;
-            }
-
-            return null;
+        if (Arrays.equals(magic, MAGIC_BYTES_PNG)) {
+            return ImageFileType.PNG;
         }
+        if (Arrays.equals(magic, MAGIC_BYTES_JPG)) {
+            return ImageFileType.JPG;
+        }
+        if (Arrays.equals(magic, MAGIC_BYTES_GIF)) {
+            return ImageFileType.GIF;
+        }
+
+        // the magic byte sequence of BMP is shorter
+        assertTrue(NUMBER_MAGIC_BYTES > MAGIC_BYTES_BMP.length);
+        final byte[] bmpMagic = new byte[MAGIC_BYTES_BMP.length];
+        System.arraycopy(magic, 0, bmpMagic, 0, MAGIC_BYTES_BMP.length);
+
+        if (Arrays.equals(bmpMagic, MAGIC_BYTES_BMP)) {
+            return ImageFileType.BMP;
+        }
+
+        return null;
     }
 
     public static void assertFileExistsAndNotEmpty(Path file200) throws IOException {
