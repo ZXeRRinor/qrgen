@@ -57,9 +57,9 @@ self-explanatory (there's also javadoc available):
 
 ```xml
     <dependency>
-        <groupId>com.github.aytchell</groupId>
+        <groupId>com.github.ZXeRRinor</groupId>
         <artifactId>qrgen</artifactId>
-        <version>2.0.0</version>
+        <version>1.0</version>
     </dependency>
 ```
 
@@ -82,7 +82,7 @@ The file format of the resulting QR code image can be selected to be
 `png`, `gif`, `bmp` or `jpeg`:
 
 ```java
-    generator.as(ImageType.PNG);
+    generator.ofType(ImageType.PNG);
 ```
 
 <a name="conf_size"></a>
@@ -211,8 +211,10 @@ logo above it.
             generator.withLogo(logo);
         }
 
-        final Path img = generator
-                .writeToTmpFile("Hello, Github!");
+        generator.writeQrCodeToStream(
+            outputStream,
+            "Hello, Github!"
+        );
 ```
 
 ![QR code with github logo](examples/github_logo.png "github logo overlay")
@@ -242,9 +244,13 @@ the QR code. Currently, there are eight different styles available:
   - `WATER` &mdash; connected pixels which behave like adhesion of water surfaces
 
 ```java
-        final Path img = generator
-                .withPixelStyle(PixelStyle.DOTS)
-                .writeToTmpFile("Hello, Github!");
+        generator
+                .withPixelStyle(PixelStyle.DOTS);
+        
+        generator.writeQrCodeToStream(
+            outputStream,
+            "Hello, Github!"
+        );
 ```
 
 <table>
@@ -353,25 +359,30 @@ will be perfectly OK.
 ## Actually writing the QR code
 
 Once you've configured the QR code generator you can use it to write QR
-codes. The method to write a payload to a QR code image file does not change
-the state of the generator instance. So you can reuse the same generator
-instance to write as many QR Code as you like (with different payloads).
+codes. The method to encode a payload to a QR code image and write to 
+output stream does not change the state of the generator instance. So 
+you can reuse the same generator instance to write as many QR Code as 
+you like (with different payloads).
 
 ```java
-        final Path img_1 = generator
-                .writeToTmpFile("Hello, World!");
+        generator.writeQrCodeToStream(
+            outputStream,
+            "Hello, World!"
+        );
 
-        final Path img_2 = generator
-                .writeToTmpFile("Hello again");
+        generator.writeQrCodeToStream(
+            outputStream2,
+            "Hello again"
+        );
 
-        final Path img_3 = generator
-                .writeToTmpFile("Anybody out there?");
+        generator.writeQrCodeToStream(
+            outputStream3,
+            "Anybody out there?"
+        );
 ```
+To save QR code to file you can use `new FileOutputStream("path/to/your/file")` as ouputStream
+parameter.
 
-Note that the returned file will be created in the system's tmp folder with
-the "delete on exit" flag set. The method does not change access permissions
-of the created file so most probably (depending on the JRE and the OS) it will
-be readable to anyone with access to the system.
 
 <a name="license"></a>
 ## License
